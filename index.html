@@ -73,6 +73,20 @@
         new BABYLON.Vector3(0, 0, 0), scene);
       camera.attachControl(canvas, true);
 
+    
+
+// ✅ Ajout explicite du support tactile
+camera.inputs.addTouch();
+
+// ✅ Empêche le navigateur de bloquer les gestes tactiles
+canvas.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+}, { passive: false });
+canvas.addEventListener("touchmove", (e) => {
+  e.preventDefault();
+}, { passive: false });
+
+
       camera.wheelPrecision = isMobile ? 5 : 10;
       camera.pinchPrecision = isMobile ? 5 : 10;
       camera.lowerRadiusLimit = 5;
