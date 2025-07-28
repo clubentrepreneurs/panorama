@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Panorama + GLB + Mobile Stable</title>
+  <title>Panorama + GLB + Sliders + Presets</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     html, body {
@@ -43,6 +43,39 @@
       height: 100%;
       border: none;
     }
+    #controls {
+      position: absolute;
+      bottom: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      padding: 10px;
+      border-radius: 8px;
+      z-index: 4;
+      font-size: 14px;
+    }
+    #controls label {
+      display: block;
+      margin-top: 5px;
+    }
+    #controls input {
+      width: 150px;
+    }
+    #presets {
+      margin-top: 10px;
+    }
+    #presets button {
+      margin: 2px;
+      padding: 5px 10px;
+      background: #444;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    #presets button:hover {
+      background: #666;
+    }
   </style>
 </head>
 <body>
@@ -50,6 +83,27 @@
   <div id="overlay">4 incontournables</div>
   <div id="videoContainer">
     <iframe src="https://www.youtube.com/embed/Jgcb7hjdgaU?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>
+  </div>
+  <div id="controls">
+    <label>
+      Distance : <span id="distanceValue">5</span>
+      <input type="range" id="distanceSlider" min="3" max="15" step="0.1" value="5">
+    </label>
+    <label>
+      Hauteur : <span id="heightValue">-1.5</span>
+      <input type="range" id="heightSlider" min="-5" max="1" step="0.1" value="-1.5">
+    </label>
+    <label>
+      Profondeur latérale : <span id="depthValue">0</span>
+      <input type="range" id="depthSlider" min="-5" max="5" step="0.1" value="0">
+    </label>
+    <div id="presets">
+      <button onclick="setPreset(0, 0, 5)">Centre</button>
+      <button onclick="setPreset(-3, 0, 5)">Gauche</button>
+      <button onclick="setPreset(3, 0, 5)">Droite</button>
+      <button onclick="setPreset(0, 2, 5)">Haut</button>
+      <button onclick="setPreset(0, -2, 5)">Bas</button>
+    </div>
   </div>
 
   <!-- Babylon.js -->
@@ -60,6 +114,48 @@
     const canvas = document.getElementById("renderCanvas");
     const overlay = document.getElementById("overlay");
     const videoContainer = document.getElementById("videoContainer");
+
+    const distanceSlider = document.getElementById("distanceSlider");
+    const heightSlider = document.getElementById("heightSlider");
+    const depthSlider = document.getElementById("depthSlider");
+
+    const distanceValue = document.getElementById("distanceValue");
+    const heightValue = document.getElementById("heightValue");
+    const depthValue = document.getElementById("depthValue");
+
+    let distanceFromCenter = parseFloat(distanceSlider.value);
+    let verticalOffset = parseFloat(heightSlider.value);
+    let lateralOffset = parseFloat(depthSlider.value);
+
+    distanceSlider.addEventListener("input", () => {
+      distanceFromCenter = parseFloat(distanceSlider.value);
+      distanceValue.textContent = distanceFromCenter.toFixed(1);
+    });
+
+    heightSlider.addEventListener("input", () => {
+      verticalOffset = parseFloat(heightSlider.value);
+      heightValue.textContent = verticalOffset.toFixed(1);
+    });
+
+    depthSlider.addEventListener("input", () => {
+      lateralOffset = parseFloat(depthSlider.value);
+      depthValue.textContent = lateralOffset.toFixed(1);
+    });
+
+    function setPreset(x, y, z) {
+      lateralOffset = x;
+      verticalOffset = y;
+      distanceFromCenter = z;
+
+      depthSlider.value = x;
+      heightSlider.value = y;
+      distanceSlider.value = z;
+
+      depthValue.textContent = x.toFixed(1);
+      heightValue.textContent = y.toFixed(1);
+      distanceValue.textContent = z.toFixed(1);
+    }
+
     const engine = new BABYLON.Engine(canvas, true);
 
     async function createScene() {
@@ -86,6 +182,7 @@
 
       const panoMaterial = new BABYLON.StandardMaterial("panoMat", scene);
       const texture = new BABYLON.Texture("test.png", scene);
+
       texture.uScale = -1;
       texture.uOffset = 1;
       texture.vScale = 1;
@@ -98,59 +195,15 @@
 
       let model;
       let modelMeshes = [];
-      let pulse1, pulse2;
 
       await BABYLON.SceneLoader.ImportMeshAsync("", "./", "socleetoiletoque.glb", scene).then(result => {
         model = result.meshes[0];
         model.scaling = new BABYLON.Vector3(2, 2, 2);
         modelMeshes = result.meshes;
         modelMeshes.forEach(mesh => mesh.isPickable = true);
-
-        // 🔵 Cercles pulsants
-        const pulseMaterial = new BABYLON.StandardMaterial("pulseMat", scene);
-        pulseMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.6, 1);
-        pulseMaterial.alpha = 0.5;
-        pulseMaterial.backFaceCulling = false;
-        pulseMaterial.emissiveColor = new BABYLON.Color3(0.2, 0.6, 1);
-
-        pulse1 = BABYLON.MeshBuilder.CreateDisc("pulse1", { radius: 0.5, tessellation: 64 }, scene);
-        pulse2 = BABYLON.MeshBuilder.CreateDisc("pulse2", { radius: 0.5, tessellation: 64 }, scene);
-
-        pulse1.material = pulseMaterial;
-        pulse2.material = pulseMaterial;
-
-        pulse1.rotation.x = Math.PI / 2;
-        pulse2.rotation.x = Math.PI / 2;
-
-        pulse1.parent = model;
-        pulse2.parent = model;
-
-        pulse1.position.y = -1.5;
-        pulse2.position.y = -1.5;
-
-        const createPulseAnimation = (mesh, delay) => {
-          const anim = new BABYLON.Animation("pulseAnim", "scaling", 30,
-            BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
-            BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
-
-          const keys = [
-            { frame: 0, value: new BABYLON.Vector3(1, 1, 1) },
-            { frame: 30, value: new BABYLON.Vector3(2, 1, 2) },
-            { frame: 60, value: new BABYLON.Vector3(1, 1, 1) }
-          ];
-
-          anim.setKeys(keys);
-          mesh.animations = [anim];
-          scene.beginAnimation(mesh, delay, 60, true);
-        };
-
-        createPulseAnimation(pulse1, 0);
-        createPulseAnimation(pulse2, 15);
       });
 
       const targetDirection = new BABYLON.Vector3(0, 0, -1);
-      const distanceFromCenter = 8;
-      const verticalOffset = -3;
 
       scene.onBeforeRenderObservable.add(() => {
         if (!model) return;
@@ -160,7 +213,8 @@
         );
         const rotatedDirection = BABYLON.Vector3.TransformCoordinates(targetDirection, rotationMatrix);
 
-        model.position = rotatedDirection.scale(distanceFromCenter).add(new BABYLON.Vector3(0, verticalOffset, 0));
+        model.position = rotatedDirection.scale(distanceFromCenter)
+          .add(new BABYLON.Vector3(lateralOffset, verticalOffset, 0));
         model.lookAt(BABYLON.Vector3.Zero());
       });
 
@@ -174,7 +228,8 @@
           camera.viewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight())
         );
 
-        overlay.style.left = `${pos.x}px`;
+
+                  overlay.style.left = `${pos.x}px`;
         overlay.style.top = `${pos.y}px`;
       });
 
