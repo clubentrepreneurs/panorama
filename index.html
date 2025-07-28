@@ -18,7 +18,6 @@
       width: 100vw !important;
       height: 100vh !important;
       display: block;
-      touch-action: none;
     }
     #overlay {
       position: absolute;
@@ -66,30 +65,18 @@
     async function createScene() {
       const scene = new BABYLON.Scene(engine);
 
-      const isMobile = window.innerWidth < 600;
-
+      // ✅ Caméra centrée sur le panorama avec zoom tactile optimisé
       const camera = new BABYLON.ArcRotateCamera("camera",
-        Math.PI / 2, Math.PI / 2, isMobile ? 20 : 10,
+        Math.PI / 2, Math.PI / 2, window.innerWidth < 600 ? 20 : 10,
         new BABYLON.Vector3(0, 0, 0), scene);
       camera.attachControl(canvas, true);
 
-      // ✅ Ajout pour activer le zoom tactile
-      camera.inputs.addTouch();
-
-      // ✅ Empêche le navigateur de bloquer les gestes tactiles
-      canvas.addEventListener("touchstart", (e) => {
-        e.preventDefault();
-      }, { passive: false });
-      canvas.addEventListener("touchmove", (e) => {
-        e.preventDefault();
-      }, { passive: false });
-
-      camera.wheelPrecision = isMobile ? 5 : 10;
-      camera.pinchPrecision = isMobile ? 5 : 10;
-      camera.lowerRadiusLimit = 5;
-      camera.upperRadiusLimit = isMobile ? 100 : 50;
-      camera.angularSensibilityX = 2000;
-      camera.angularSensibilityY = 2000;
+      camera.wheelPrecision = 10;         // Zoom souris plus fluide
+      camera.pinchPrecision = 10;         // Zoom tactile plus fluide
+      camera.lowerRadiusLimit = 5;        // Zoom minimum
+      camera.upperRadiusLimit = 50;       // Zoom maximum
+      camera.angularSensibilityX = 2000;  // Sensibilité horizontale
+      camera.angularSensibilityY = 2000;  // Sensibilité verticale
       camera.minZ = 0.1;
 
       const light = new BABYLON.HemisphericLight("light",
@@ -102,7 +89,7 @@
         sideOrientation: BABYLON.Mesh.BACKSIDE
       }, scene);
 
-      panorama.rotation.y = Math.PI / -2;
+      panorama.rotation.y = Math.PI / -2; // Décalage vers la droite
 
       const panoMaterial = new BABYLON.StandardMaterial("panoMat", scene);
       const texture = new BABYLON.Texture("test.png", scene);
