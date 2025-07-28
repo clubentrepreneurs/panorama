@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Panorama Centré + GLB + Mobile</title>
+  <title>Panorama décalé + GLB</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     html, body {
@@ -79,13 +79,15 @@
         new BABYLON.Vector3(0, 1, 0), scene);
       light.intensity = 1;
 
-      // ✅ Sphère panoramique inversée + correction miroir
+      // ✅ Sphère panoramique inversée + rotation pour décalage
       const panorama = BABYLON.MeshBuilder.CreateSphere("panorama", {
         segments: 64,
         diameter: 1000,
         sideOrientation: BABYLON.Mesh.BACKSIDE
       }, scene);
-      panorama.scaling.x = -1; // Correction effet miroir
+
+      // ✅ Rotation vers la droite pour décaler l’image
+      panorama.rotation.y = Math.PI / 4; // ≈ 45° vers la droite
 
       const panoMaterial = new BABYLON.StandardMaterial("panoMat", scene);
       const texture = new BABYLON.Texture("test.png", scene);
