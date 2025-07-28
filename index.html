@@ -106,7 +106,6 @@
         modelMeshes = result.meshes;
         modelMeshes.forEach(mesh => mesh.isPickable = true);
 
-        // 🔵 Cercles pulsants
         const pulseMaterial = new BABYLON.StandardMaterial("pulseMat", scene);
         pulseMaterial.diffuseColor = new BABYLON.Color3(0.2, 0.6, 1);
         pulseMaterial.alpha = 0.5;
@@ -148,9 +147,10 @@
         createPulseAnimation(pulse2, 15);
       });
 
-      const targetDirection = new BABYLON.Vector3(0, 0, -1);
-      const distanceFromCenter = 8;
-      const verticalOffset = -3;
+      // 🔁 Nouvelle direction et position
+      const targetDirection = new BABYLON.Vector3(1, -0.3, -1);
+      const distanceFromCenter = 15;
+      const verticalOffset = -5;
 
       scene.onBeforeRenderObservable.add(() => {
         if (!model) return;
