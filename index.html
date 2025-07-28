@@ -3,25 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <title>Panorama décalé + GLB</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <style>
     html, body {
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
-      font-family: sans-serif;
+      width: 100vw;
+      height: 100vh;
       overflow: hidden;
-    }
-    #container {
-      width: 100%;
-      height: 100%;
-      touch-action: pinch-zoom; /* permet le zoom tactile */
-      position: relative;
+      touch-action: none;
+      font-family: sans-serif;
     }
     canvas {
-      width: 100% !important;
-      height: 100% !important;
+      width: 100vw !important;
+      height: 100vh !important;
       display: block;
     }
     #overlay {
@@ -51,16 +46,16 @@
   </style>
 </head>
 <body>
-  <div id="container">
-    <canvas id="renderCanvas"></canvas>
-    <div id="overlay">4 incontournables</div>
-    <div id="videoContainer">
-      <iframe src="https://www.youtube.com/embed/Jgcb7hjdgaU?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>
-    </div>
+  <canvas id="renderCanvas"></canvas>
+  <div id="overlay">4 incontournables</div>
+  <div id="videoContainer">
+    <iframe src="https://www.youtube.com/embed/Jgcb7hjdgaU?autoplay=1" allow="autoplay; encrypted-media" allowfullscreen></iframe>
   </div>
 
+  <!-- Babylon.js -->
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
   <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+
   <script>
     const canvas = document.getElementById("renderCanvas");
     const overlay = document.getElementById("overlay");
@@ -70,32 +65,36 @@
     async function createScene() {
       const scene = new BABYLON.Scene(engine);
 
+      // ✅ Caméra centrée sur le panorama avec zoom tactile optimisé
       const camera = new BABYLON.ArcRotateCamera("camera",
-        Math.PI / 2, Math.PI / 2, window.innerWidth < 600 ? 30 : 10,
+        Math.PI / 2, Math.PI / 2, window.innerWidth < 600 ? 20 : 10,
         new BABYLON.Vector3(0, 0, 0), scene);
       camera.attachControl(canvas, true);
-      camera.pinchToZoom = true;          // permet le zoom tactile
-      camera.pinchPrecision = 30;
-      camera.wheelPrecision = 30;
-      camera.lowerRadiusLimit = 3;
-      camera.upperRadiusLimit = 100;
-      camera.angularSensibilityX = 1500;
-      camera.angularSensibilityY = 1500;
+
+      camera.wheelPrecision = 10;         // Zoom souris plus fluide
+      camera.pinchPrecision = 10;         // Zoom tactile plus fluide
+      camera.lowerRadiusLimit = 5;        // Zoom minimum
+      camera.upperRadiusLimit = 50;       // Zoom maximum
+      camera.angularSensibilityX = 2000;  // Sensibilité horizontale
+      camera.angularSensibilityY = 2000;  // Sensibilité verticale
       camera.minZ = 0.1;
 
       const light = new BABYLON.HemisphericLight("light",
         new BABYLON.Vector3(0, 1, 0), scene);
+      light.intensity = 1;
 
       const panorama = BABYLON.MeshBuilder.CreateSphere("panorama", {
         segments: 64,
         diameter: 1000,
         sideOrientation: BABYLON.Mesh.BACKSIDE
       }, scene);
-      panorama.rotation.y = Math.PI / -2;
+
+      panorama.rotation.y = Math.PI / -2; // Décalage vers la droite
 
       const panoMaterial = new BABYLON.StandardMaterial("panoMat", scene);
       const texture = new BABYLON.Texture("test.png", scene);
       texture.coordinatesMode = BABYLON.Texture.FIXED_EQUIRECTANGULAR_MODE;
+
       panoMaterial.diffuseTexture = texture;
       panoMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
       panoMaterial.backFaceCulling = false;
@@ -119,22 +118,30 @@
 
         pulse1 = BABYLON.MeshBuilder.CreateDisc("pulse1", { radius: 0.5, tessellation: 64 }, scene);
         pulse2 = BABYLON.MeshBuilder.CreateDisc("pulse2", { radius: 0.5, tessellation: 64 }, scene);
-        [pulse1, pulse2].forEach(p => {
-          p.material = pulseMaterial;
-          p.rotation.x = Math.PI / 2;
-          p.parent = model;
-          p.position.y = -1.5;
-        });
+
+        pulse1.material = pulseMaterial;
+        pulse2.material = pulseMaterial;
+
+        pulse1.rotation.x = Math.PI / 2;
+        pulse2.rotation.x = Math.PI / 2;
+
+        pulse1.parent = model;
+        pulse2.parent = model;
+
+        pulse1.position.y = -1.5;
+        pulse2.position.y = -1.5;
 
         const createPulseAnimation = (mesh, delay) => {
           const anim = new BABYLON.Animation("pulseAnim", "scaling", 30,
             BABYLON.Animation.ANIMATIONTYPE_VECTOR3,
             BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+
           const keys = [
             { frame: 0, value: new BABYLON.Vector3(1, 1, 1) },
             { frame: 30, value: new BABYLON.Vector3(2, 1, 2) },
             { frame: 60, value: new BABYLON.Vector3(1, 1, 1) }
           ];
+
           anim.setKeys(keys);
           mesh.animations = [anim];
           scene.beginAnimation(mesh, delay, 60, true);
@@ -150,20 +157,26 @@
 
       scene.onBeforeRenderObservable.add(() => {
         if (!model) return;
-        const rotationMatrix = BABYLON.Matrix.RotationYawPitchRoll(camera.alpha, camera.beta, 0);
+
+        const rotationMatrix = BABYLON.Matrix.RotationYawPitchRoll(
+          camera.alpha, camera.beta, 0
+        );
         const rotatedDirection = BABYLON.Vector3.TransformCoordinates(targetDirection, rotationMatrix);
+
         model.position = rotatedDirection.scale(distanceFromCenter).add(new BABYLON.Vector3(0, verticalOffset, 0));
         model.lookAt(BABYLON.Vector3.Zero());
       });
 
       scene.onAfterRenderObservable.add(() => {
         if (!model) return;
+
         const pos = BABYLON.Vector3.Project(
           model.getBoundingInfo().boundingSphere.centerWorld,
           BABYLON.Matrix.Identity(),
           scene.getTransformMatrix(),
           camera.viewport.toGlobal(engine.getRenderWidth(), engine.getRenderHeight())
         );
+
         overlay.style.left = `${pos.x}px`;
         overlay.style.top = `${pos.y}px`;
       });
@@ -186,6 +199,7 @@
       window.addEventListener("orientationchange", () => {
         setTimeout(() => engine.resize(), 300);
       });
+
       if (window.innerHeight > window.innerWidth) {
         alert("Pour une meilleure expérience, tournez votre appareil en mode paysage.");
       }
