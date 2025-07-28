@@ -111,11 +111,11 @@
       camera.minZ = 0.1;
 
       zoomInButton.addEventListener('click', () => {
-        camera.radius = Math.max(camera.lowerRadiusLimit, camera.radius * 5);
+        camera.radius = Math.max(camera.lowerRadiusLimit, camera.radius * 0.1);
       });
 
       zoomOutButton.addEventListener('click', () => {
-        camera.radius = Math.min(camera.upperRadiusLimit, camera.radius * 5);
+        camera.radius = Math.min(camera.upperRadiusLimit, camera.radius * 0.1);
       });
 
       const light = new BABYLON.HemisphericLight("light",
