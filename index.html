@@ -65,8 +65,9 @@
     async function createScene() {
       const scene = new BABYLON.Scene(engine);
 
+      // Caméra centrée sur le panorama
       const camera = new BABYLON.ArcRotateCamera("camera",
-        Math.PI / 2, Math.PI / 2.5, 5,
+        Math.PI / 2, Math.PI / 2, 10,
         new BABYLON.Vector3(0, 0, 0), scene);
       camera.attachControl(canvas, true);
       camera.wheelPrecision = 50;
@@ -86,9 +87,6 @@
 
       const panoMaterial = new BABYLON.StandardMaterial("panoMat", scene);
       const texture = new BABYLON.Texture("test.png", scene);
-      texture.uScale = -1;
-      texture.uOffset = 1;
-      texture.vScale = 1;
       texture.coordinatesMode = BABYLON.Texture.FIXED_EQUIRECTANGULAR_MODE;
 
       panoMaterial.diffuseTexture = texture;
@@ -147,9 +145,9 @@
         createPulseAnimation(pulse2, 15);
       });
 
-      // 🔁 Nouvelle direction et position
-      const targetDirection = new BABYLON.Vector3(10, -0.3, -1);
-      const distanceFromCenter = 1;
+      // Position du modèle ajustée
+      const targetDirection = new BABYLON.Vector3(1, -0.3, -1);
+      const distanceFromCenter = 15;
       const verticalOffset = -5;
 
       scene.onBeforeRenderObservable.add(() => {
