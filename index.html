@@ -18,6 +18,7 @@
       width: 100vw !important;
       height: 100vh !important;
       display: block;
+      touch-action: none;
     }
     #overlay {
       position: absolute;
@@ -65,7 +66,6 @@
     async function createScene() {
       const scene = new BABYLON.Scene(engine);
 
-      // ✅ Caméra centrée sur le panorama avec zoom tactile optimisé
       const isMobile = window.innerWidth < 600;
 
       const camera = new BABYLON.ArcRotateCamera("camera",
@@ -73,19 +73,16 @@
         new BABYLON.Vector3(0, 0, 0), scene);
       camera.attachControl(canvas, true);
 
-    
+      // ✅ Ajout pour activer le zoom tactile
+      camera.inputs.addTouch();
 
-// ✅ Ajout explicite du support tactile
-camera.inputs.addTouch();
-
-// ✅ Empêche le navigateur de bloquer les gestes tactiles
-canvas.addEventListener("touchstart", (e) => {
-  e.preventDefault();
-}, { passive: false });
-canvas.addEventListener("touchmove", (e) => {
-  e.preventDefault();
-}, { passive: false });
-
+      // ✅ Empêche le navigateur de bloquer les gestes tactiles
+      canvas.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+      }, { passive: false });
+      canvas.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+      }, { passive: false });
 
       camera.wheelPrecision = isMobile ? 5 : 10;
       camera.pinchPrecision = isMobile ? 5 : 10;
