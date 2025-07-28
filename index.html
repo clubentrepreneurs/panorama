@@ -65,29 +65,31 @@
     async function createScene() {
       const scene = new BABYLON.Scene(engine);
 
-      // ✅ Caméra centrée sur le panorama
+      // ✅ Caméra centrée sur le panorama avec zoom tactile optimisé
       const camera = new BABYLON.ArcRotateCamera("camera",
-        Math.PI / 2, Math.PI / 2, 10,
+        Math.PI / 2, Math.PI / 2, window.innerWidth < 600 ? 20 : 10,
         new BABYLON.Vector3(0, 0, 0), scene);
       camera.attachControl(canvas, true);
-      camera.wheelPrecision = 50;
-      camera.angularSensibilityX = 3000;
-      camera.angularSensibilityY = 3000;
+
+      camera.wheelPrecision = 10;         // Zoom souris plus fluide
+      camera.pinchPrecision = 10;         // Zoom tactile plus fluide
+      camera.lowerRadiusLimit = 5;        // Zoom minimum
+      camera.upperRadiusLimit = 50;       // Zoom maximum
+      camera.angularSensibilityX = 2000;  // Sensibilité horizontale
+      camera.angularSensibilityY = 2000;  // Sensibilité verticale
       camera.minZ = 0.1;
 
       const light = new BABYLON.HemisphericLight("light",
         new BABYLON.Vector3(0, 1, 0), scene);
       light.intensity = 1;
 
-      // ✅ Sphère panoramique inversée + rotation pour décalage
       const panorama = BABYLON.MeshBuilder.CreateSphere("panorama", {
         segments: 64,
         diameter: 1000,
         sideOrientation: BABYLON.Mesh.BACKSIDE
       }, scene);
 
-      // ✅ Rotation vers la droite pour décaler l’image
-      panorama.rotation.y = Math.PI / -2; // ≈ 45° vers la droite
+      panorama.rotation.y = Math.PI / -2; // Décalage vers la droite
 
       const panoMaterial = new BABYLON.StandardMaterial("panoMat", scene);
       const texture = new BABYLON.Texture("test.png", scene);
@@ -149,7 +151,6 @@
         createPulseAnimation(pulse2, 15);
       });
 
-      // Position dynamique du modèle
       const targetDirection = new BABYLON.Vector3(1, -0.3, -1);
       const distanceFromCenter = 15;
       const verticalOffset = -5;
